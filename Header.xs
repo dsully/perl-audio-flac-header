@@ -54,6 +54,9 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 
 	unsigned i;
 	int j;
+	int storePicture = 0;
+
+	HV *pictureContainer = newHV();
 
 	switch (block->type) {
 
@@ -254,9 +257,40 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 			break;
 		}
 
+/* The PICTURE metadata block came about in FLAC 1.1.3 */
+#ifdef FLAC_API_VERSION_CURRENT
+		case FLAC__METADATA_TYPE_PICTURE:
+		{
+			HV *picture = newHV();
+
+			my_hv_store(picture, "mimeType", newSVpv(block->data.picture.mime_type, 0));
+			my_hv_store(picture, "description", newSVpv(block->data.picture.description, 0));
+			my_hv_store(picture, "width", newSViv(block->data.picture.width));
+			my_hv_store(picture, "height", newSViv(block->data.picture.height));
+			my_hv_store(picture, "depth", newSViv(block->data.picture.depth));
+			my_hv_store(picture, "colorIndex", newSViv(block->data.picture.colors));
+			my_hv_store(picture, "imageData", newSVpv(block->data.picture.data, block->data.picture.data_length));
+
+			my_hv_store(
+				pictureContainer,
+				SvPV_nolen(newSViv(block->data.picture.type)),
+				newRV_noinc((SV*) picture)
+			);
+
+			storePicture = 1;
+
+			break;
+		}
+#endif
+
 		/* XXX- Just ignore for now */
 		default:
 			break;
+	}
+
+	if (storePicture && hv_scalar(pictureContainer)) {
+
+		my_hv_store(self, "picture", newRV_noinc((SV*) pictureContainer));
 	}
 }
 
