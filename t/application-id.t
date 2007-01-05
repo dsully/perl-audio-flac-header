@@ -2,6 +2,7 @@
 
 use strict;
 use Test::More tests => 11;
+use File::Spec::Functions qw(:ALL);
 
 BEGIN { use_ok('Audio::FLAC::Header') };
 
@@ -12,23 +13,23 @@ BEGIN { use_ok('Audio::FLAC::Header') };
 	# Be sure to test both code paths.
 	for my $constructor (qw(new_PP new_XS)) {
 
-		my $flac = Audio::FLAC::Header->$constructor('data/appId.flac');
+		my $flac = Audio::FLAC::Header->$constructor(catdir('data', 'appId.flac'));
 
-		ok $flac;
+		ok($flac, "constructor: $constructor");
 
 		my $info = $flac->info();
 
-		ok $info;
+		ok($info, "info exists");
 
 		my $cue = $flac->cuesheet();
 
-		ok $cue;
+		ok($cue, "cue sheet exists");
 
 		my $app = $flac->application(1835361648);
 
-		ok $app;
+		ok($app, "application block exists");
 
-		ok($app =~ /musicbrainz/);
+		ok($app =~ /musicbrainz/, "found musicbrainz block");
 	}
 }
 

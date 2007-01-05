@@ -2,6 +2,7 @@
 
 use strict;
 use Test::More tests => 9;
+use File::Spec::Functions qw(:ALL);
 
 BEGIN { use_ok('Audio::FLAC::Header') };
 
@@ -12,19 +13,19 @@ BEGIN { use_ok('Audio::FLAC::Header') };
 	# Be sure to test both code paths.
 	for my $constructor (qw(new_PP new_XS)) {
 
-		my $flac = Audio::FLAC::Header->$constructor('data/id3tagged.flac');
+		my $flac = Audio::FLAC::Header->$constructor(catdir('data', 'id3tagged.flac'));
 
-		ok $flac;
+		ok($flac, "constructor: $constructor");
 
 		my $info = $flac->info();
 
-		ok $info;
+		ok($info, "info block");
 
 		my $tags = $flac->tags();
 
-		ok $tags;
+		ok($tags, "tags read");
 
-		ok($tags->{'TITLE'} =~ /Allegro Maestoso/);
+		ok($tags->{'TITLE'} =~ /Allegro Maestoso/, "found title");
 	}
 }
 

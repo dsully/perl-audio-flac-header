@@ -1,7 +1,8 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 31;
+use Test::More tests => 33;
+use File::Spec::Functions qw(:ALL);
 
 BEGIN { use_ok('Audio::FLAC::Header') };
 
@@ -12,23 +13,33 @@ BEGIN { use_ok('Audio::FLAC::Header') };
 	# Be sure to test both code paths.
 	for my $constructor (qw(new_PP new_XS)) {
 
-		my $flac = Audio::FLAC::Header->$constructor('data/test.flac');
+		my $flac = Audio::FLAC::Header->$constructor(catdir('data', 'test.flac'));
 
-		ok $flac;
+		ok($flac, "constructor: $constructor");
+
+		my $checkVendor = '';
+
+		if ($constructor eq 'new_PP') {
+			$checkVendor = 'Audio::FLAC::Header';
+		} else {
+			$checkVendor = 'libFLAC';
+		}
+
+		like($flac->vendor_string, qr/$checkVendor/, "vendor string");
 
 		my $info = $flac->info();
 
-		ok $info;
+		ok($info, "info block");
 
-		ok($flac->info('SAMPLERATE') == 44100);
-		ok($flac->info('MD5CHECKSUM') eq '592fb7897a3589c6acf957fd3f8dc854');
-		ok($flac->info('TOTALSAMPLES') == 153200460);
+		ok($flac->info('SAMPLERATE') == 44100, "sample rate");
+		ok($flac->info('MD5CHECKSUM') eq '592fb7897a3589c6acf957fd3f8dc854', "md5");
+		ok($flac->info('TOTALSAMPLES') == 153200460, "total samples");
 
 		my $tags = $flac->tags();
 
-		ok $tags;
+		ok($tags, "tags read");
 
-		is($flac->tags('AUTHOR'), 'Praga Khan');
+		is($flac->tags('AUTHOR'), 'Praga Khan', "AUTHOR ok");
 
 		# XXX - should have accessors
 		ok($flac->{'trackLengthFrames'} =~ /70.00\d+/);

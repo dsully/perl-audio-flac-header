@@ -1,4 +1,4 @@
-Audio::FLAC version 1.4
+Audio::FLAC version 1.5
 =======================
 
 The README is used to introduce the module and provide instructions on
@@ -26,9 +26,11 @@ and use a XS version, which is much faster than the pure perl one.
 
 COPYRIGHT AND LICENCE
 
-Put the correct copyright and licence information here.
+Pure perl code Copyright (c) 2003-2004, Erik Reckase.
 
-Copyright (C) 2003-2005 by Dan Sully & Erik Reckase
+Pure perl code Copyright (c) 2003-2007, Dan Sully & Slim Devices.
+
+XS code Copyright (c) 2004-2007, Dan Sully & Slim Devices.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.2 or,
