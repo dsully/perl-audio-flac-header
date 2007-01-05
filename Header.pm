@@ -190,9 +190,6 @@ sub write_PP {
 	my $metadataBlocks = $FLACHEADERFLAG;
 	my $tmpnum;
 
-	use Data::Dump;
-	Data::Dump::dump($self->{'tags'});
-
 	# Make a list of the tags and lengths for packing into the vorbis metadata block
 	foreach (keys %{$self->{'tags'}}) {
 
