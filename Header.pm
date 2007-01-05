@@ -5,7 +5,7 @@ package Audio::FLAC::Header;
 use strict;
 use File::Basename;
 
-our $VERSION = '1.6';
+our $VERSION = '1.7';
 our $HAVE_XS = 0;
 
 # First four bytes of stream are always fLaC
@@ -52,15 +52,15 @@ XS_BOOT: {
 
 	# Try to use the faster code first.
 	if ($HAVE_XS) {
-		*new   = \&new_XS;
-		*write = \&write_XS;
+		*new   = \&_new_XS;
+		*write = \&_write_XS;
 	} else {
-		*new   = \&new_PP;
-		*write = \&write_PP;
+		*new   = \&_new_PP;
+		*write = \&_write_PP;
 	}
 }
 
-sub new_PP {
+sub _new_PP {
 	my ($class, $file) = @_;
 
 	# open up the file
@@ -179,7 +179,7 @@ sub vendor_string {
 	return $self->{'vendor'} || "Audio::FLAC::Header $VERSION";
 }
 
-sub write_PP {
+sub _write_PP {
 	my $self = shift;
 
 	my @tagString = ();
@@ -922,7 +922,9 @@ FLAC stream, then loads the information and comment fields.
 
 =head1 INSTANCE METHODS
 
-=head2 C<info ([$key])>
+=over 4
+
+=item * info( [$key] )
 
 Returns a hashref containing information about the FLAC file from
 the file's information header.
@@ -930,7 +932,7 @@ the file's information header.
 The optional parameter, key, allows you to retrieve a single value from
 the info hash.  Returns C<undef> if the key is not found.
 
-=head2 C<tags ([$key])>
+=item * tags( [$key] )
 
 Returns a hashref containing tag keys and values of the FLAC file from
 the file's Vorbis Comment header.
@@ -938,7 +940,7 @@ the file's Vorbis Comment header.
 The optional parameter, key, allows you to retrieve a single value from
 the tag hash.  Returns C<undef> if the key is not found.
 
-=head2 C<cuesheet ()>
+=item * cuesheet( )
 
 Returns an arrayref which contains a textual representation of the
 cuesheet metada block. Each element in the array corresponds to one
@@ -948,12 +950,32 @@ output of metaflac's --export-cuesheet-to option, with the exception
 of the FILE line, which includes the actual file name instead of 
 "dummy.wav".
 
-=head2 C<write ()>
+=item * seektable( )
+
+Returns the seektable. Currently disabled for performance.
+
+=item * application( $appId )
+
+Returns the application block for the passed id.
+
+=item * picture( [$type ] ) 
+
+Returns a hash containing data from a PICTURE block if found.
+
+Defaults to type 3 - "Front Cover"
+
+=item * vendor_string( ) 
+
+Returns the vendor string.
+
+=item * write( )
 
 Writes the current contents of the tag hash to the FLAC file, given that
 there's enough space in the header to do so.  If there's insufficient
 space available (using pre-existing padding), the file will remain
 unchanged, and the function will return a non-zero value.
+
+=back
 
 =head1 SEE ALSO
 
@@ -961,10 +983,7 @@ L<http://flac.sourceforge.net/format.html>
 
 =head1 AUTHORS
 
-Erik Reckase, E<lt>cerebusjam at hotmail dot comE<gt>, with lots of help
-from Dan Sully, E<lt>daniel@cpan.orgE<gt>
-
-Dan Sully, E<lt>daniel@cpan.orgE<gt> for XS code.
+Dan Sully, E<lt>daniel@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 

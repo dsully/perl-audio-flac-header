@@ -136,7 +136,7 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 				appId = newSVpvf("%ld", strtol(SvPV_nolen(tmpId), NULL, 16));
 
 				if (block->data.application.data != 0) {
-					my_hv_store(app, SvPV_nolen(appId), newSVpv((char*)block->data.application.data, 0));
+					my_hv_store(app, SvPV_nolen(appId), newSVpv((char*)block->data.application.data, block->length));
 				}
 			
 				my_hv_store(self, "application",  newRV_noinc((SV*) app));
@@ -343,7 +343,7 @@ MODULE = Audio::FLAC::Header PACKAGE = Audio::FLAC::Header
 PROTOTYPES: DISABLE
 
 SV*
-new_XS(class, path)
+_new_XS(class, path)
 	char *class;
 	char *path;
 
@@ -507,7 +507,7 @@ new_XS(class, path)
 	RETVAL
 
 SV*
-write_XS(obj)
+_write_XS(obj)
 	SV* obj
 
 	CODE:

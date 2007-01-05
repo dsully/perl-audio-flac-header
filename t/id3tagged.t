@@ -11,7 +11,7 @@ BEGIN { use_ok('Audio::FLAC::Header') };
 {
 
 	# Be sure to test both code paths.
-	for my $constructor (qw(new_PP new_XS)) {
+	for my $constructor (qw(_new_PP _new_XS)) {
 
 		my $flac = Audio::FLAC::Header->$constructor(catdir('data', 'id3tagged.flac'));
 

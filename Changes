@@ -1,5 +1,12 @@
 Revision history for Perl extension Audio::FLAC.
 
+1.7  Fri Jan  5 15:50:46 PST 2007
+
+	- XS: RT #15415 - use the block length when storing the application block.
+	- Add POD & POD Coverage tests.
+	- Fix META.yml
+	- Use Module::Install
+
 1.6  Thu Jan  4 19:09:35 PST 2007
 
 	- Remove extraneous debugging

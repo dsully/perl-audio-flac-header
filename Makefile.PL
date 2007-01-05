@@ -1,23 +1,18 @@
-use ExtUtils::MakeMaker;
-use Config;
+# $Id: Makefile.PL 10 1998-12-16 23:02:45Z daniel $
 
-$LDDLFLAGS = '';
-$LDDLFLAGS = '-all_load' if $^O eq 'darwin';
-$LDDLFLAGS = '-L/usr/pkg/lib' if $^O eq 'netbsd';
+use inc::Module::Install;
+
+name('Audio-FLAC-Header');
+license('perl');
+perl_version('5.005');
+all_from('Header.pm');
 
 if ($^O =~ /win32/i) {
-        $LIBS = '-lFLAC_static';
-	$CCFLAGS = '';
+	cc_lib_links('FLAC_static');
 } else {
-        $LIBS = '-lFLAC';
-	$CCFLAGS = '-Wall';
+	cc_lib_links('FLAC');
+	cc_optimize_flags('-Wall');
 }
 
-WriteMakefile(
-	'NAME'		=> 'Audio::FLAC::Header',
-	'VERSION_FROM'	=> 'Header.pm',
-	'LIBS'		=> [$LIBS],
-	'DEFINE'	=> '-O',
-	'CCFLAGS'	=> $CCFLAGS,
-	'LDDLFLAGS'	=> "$Config{'lddlflags'} $LDDLFLAGS",
-);
+auto_install();
+WriteAll();
