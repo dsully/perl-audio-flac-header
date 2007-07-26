@@ -76,7 +76,7 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 			my_hv_store(info, "BITSPERSAMPLE", newSVuv(block->data.stream_info.bits_per_sample));
 			my_hv_store(info, "TOTALSAMPLES", newSVnv(block->data.stream_info.total_samples));
 
-			if (block->data.stream_info.md5sum[0]) {
+			if (block->data.stream_info.md5sum != NULL) {
 
 				/* Initialize an SV with the first element,
 				   and then append to it. If we don't do it this way, we get a "use of

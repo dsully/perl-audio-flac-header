@@ -1,5 +1,10 @@
 Revision history for Perl extension Audio::FLAC.
 
+1.8  Thu Jul 26 14:02:51 PDT 2007
+
+        - XS: Fix reading MD5 when leading with 00. Add tests.
+        - Update Documentation to reflect return value reality.
+
 1.7  Fri Jan  5 15:50:46 PST 2007
 
 	- XS: RT #15415 - use the block length when storing the application block.

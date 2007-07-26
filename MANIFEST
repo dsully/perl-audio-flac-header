@@ -6,12 +6,14 @@ data/test.flac
 data/id3tagged.flac
 data/appId.flac
 data/empty.flac
+data/md5.flac
 data/picture.flac
 t/basic.t
 t/pod.t
 t/pod-coverage.t
 t/application-id.t
 t/id3tagged.t
+t/md5.t
 t/picture.t
 t/write.t
 Header.pm

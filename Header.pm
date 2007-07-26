@@ -5,7 +5,7 @@ package Audio::FLAC::Header;
 use strict;
 use File::Basename;
 
-our $VERSION = '1.7';
+our $VERSION = '1.8';
 our $HAVE_XS = 0;
 
 # First four bytes of stream are always fLaC
@@ -971,9 +971,9 @@ Returns the vendor string.
 =item * write( )
 
 Writes the current contents of the tag hash to the FLAC file, given that
-there's enough space in the header to do so.  If there's insufficient
+there's enough space in the header to do so. If there's insufficient
 space available (using pre-existing padding), the file will remain
-unchanged, and the function will return a non-zero value.
+unchanged, and the function will return a zero value.
 
 =back
 
