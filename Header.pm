@@ -5,7 +5,7 @@ package Audio::FLAC::Header;
 use strict;
 use File::Basename;
 
-our $VERSION = '1.8';
+our $VERSION = '1.9';
 our $HAVE_XS = 0;
 
 # First four bytes of stream are always fLaC
