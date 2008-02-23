@@ -30,6 +30,9 @@
 
 #include <FLAC/all.h>
 
+/* for PRIu64 */
+#include <inttypes.h>
+
 #define FLACHEADERFLAG "fLaC"
 #define ID3HEADERFLAG  "ID3"
 
@@ -195,6 +198,19 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 		{
 			AV *cueArray = newAV();
 
+			/* 
+			 * buffer for decimal representations of uint64_t values
+			 *
+			 * newSVpvf() and sv_catpvf() can't handle 64-bit values 
+			 * in some cases, so we need to do the conversion "manually"
+			 * with sprintf() and the PRIu64 format macro for portability
+			 *
+			 * see http://bugs.debian.org/462249
+			 *
+			 * maximum string length: ceil(log10(2**64)) == 20 (+trailing \0)
+			 */
+			char decimal[21];
+
 			/* A lot of this comes from flac/src/share/grabbag/cuesheet.c */
 			const FLAC__StreamMetadata_CueSheet *cs;
 			unsigned track_num, index_num;
@@ -239,7 +255,8 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 						sv_catpvf(indexSV, "%02u:%02u:%02u\n", m, s, f);
 
 					} else {
-						sv_catpvf(indexSV, "%"UVuf"\n", track->offset + index->offset);
+						sprintf(decimal, "%"PRIu64, track->offset + index->offset);
+						sv_catpvf(indexSV, "%s\n", decimal);
 					}
 
 
@@ -247,9 +264,11 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 				}
 			}
 
-			av_push(cueArray, newSVpvf("REM FLAC__lead-in %"UVuf"\n", cs->lead_in));
-			av_push(cueArray, newSVpvf("REM FLAC__lead-out %u %"UVuf"\n", 
-				(unsigned)cs->tracks[track_num].number, cs->tracks[track_num].offset)
+			sprintf(decimal, "%"PRIu64, cs->lead_in);
+			av_push(cueArray, newSVpvf("REM FLAC__lead-in %s\n", decimal));
+			sprintf(decimal, "%"PRIu64, cs->tracks[track_num].offset);
+			av_push(cueArray, newSVpvf("REM FLAC__lead-out %u %s\n", 
+				(unsigned)cs->tracks[track_num].number, decimal)
 			);
 
 			my_hv_store(self, "cuesheet",  newRV_noinc((SV*) cueArray));
@@ -264,12 +283,12 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 			HV *picture = newHV();
 
 			my_hv_store(picture, "mimeType", newSVpv(block->data.picture.mime_type, 0));
-			my_hv_store(picture, "description", newSVpv(block->data.picture.description, 0));
+			my_hv_store(picture, "description", newSVpv((const char*)block->data.picture.description, 0));
 			my_hv_store(picture, "width", newSViv(block->data.picture.width));
 			my_hv_store(picture, "height", newSViv(block->data.picture.height));
 			my_hv_store(picture, "depth", newSViv(block->data.picture.depth));
 			my_hv_store(picture, "colorIndex", newSViv(block->data.picture.colors));
-			my_hv_store(picture, "imageData", newSVpv(block->data.picture.data, block->data.picture.data_length));
+			my_hv_store(picture, "imageData", newSVpv((const char*)block->data.picture.data, block->data.picture.data_length));
 
 			my_hv_store(
 				pictureContainer,
@@ -513,7 +532,6 @@ _write_XS(obj)
 	CODE:
 
 	FLAC__bool ok = true;
-	FLAC__bool needs_write = false;
 
 	HE *he;
 	HV *self = (HV *) SvRV(obj);

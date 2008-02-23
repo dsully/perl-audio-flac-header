@@ -6,6 +6,7 @@ name('Audio-FLAC-Header');
 license('perl');
 perl_version('5.005');
 all_from('Header.pm');
+requires_external_cc();
 
 if ($^O =~ /win32/i) {
 	cc_lib_links('FLAC_static');
