@@ -12,7 +12,7 @@ if ($^O =~ /win32/i) {
 	cc_lib_links('FLAC_static');
 } else {
 	cc_lib_links('FLAC');
-	cc_optimize_flags('-Wall');
+	cc_optimize_flags('-Wall') if $Config::Config{'archname'} =~ /gnu/i;
 }
 
 auto_install();
