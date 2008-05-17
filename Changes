@@ -1,5 +1,8 @@
 Revision history for Perl extension Audio::FLAC.
 
+2.1  Sat May 17 00:42:06 PDT 2008
+	- Try and abort cpansmoke before it sends me email.
+
 2.0  Sat Feb 23 13:32:54 PST 2008
 	- RT #32691: Picture $type incorrectly defaults to 3 for valid input 0 - "Other"
 	- RT #32631: t/pod-coverage.t fails with Pod::Coverage 0.19
