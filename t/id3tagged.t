@@ -25,7 +25,7 @@ BEGIN { use_ok('Audio::FLAC::Header') };
 
 		ok($tags, "tags read");
 
-		ok($tags->{'TITLE'} =~ /Allegro Maestoso/, "found title");
+		ok($tags->{'title'} =~ /Allegro Maestoso/, "found title");
 	}
 }
 

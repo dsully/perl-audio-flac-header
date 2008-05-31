@@ -60,6 +60,7 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 	int storePicture = 0;
 
 	HV *pictureContainer = newHV();
+	AV *allpicturesContainer = newAV();
 
 	switch (block->type) {
 
@@ -154,8 +155,12 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 			char *half;
 			AV   *rawTagArray = newAV();
 			HV   *tags = newHV();
+			SV   **tag = NULL;
+			SV   **separator = NULL;
 
-			my_hv_store(tags, "VENDOR", newSVpv((char*)block->data.vorbis_comment.vendor_string.entry, 0));
+			if (block->data.vorbis_comment.vendor_string.entry) {
+				my_hv_store(tags, "VENDOR", newSVpv((char*)block->data.vorbis_comment.vendor_string.entry, 0));
+			}
 
 			for (i = 0; i < block->data.vorbis_comment.num_comments; i++) {
 
@@ -170,7 +175,7 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 					block->data.vorbis_comment.comments[i].length
 				));
 
-				/* store the raw tag, before we uppercase it */
+				/* store the raw tags */
 				av_push(rawTagArray, newSVpv(entry, 0));
 
 				half = strchr(entry, '=');
@@ -180,12 +185,25 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 					continue;
 				}
 
-				/* make the key be uppercased */
-				for (j = 0; j <= half - entry; j++) {
-					entry[j] = toUPPER(entry[j]);
-				}
+				if (hv_exists(tags, entry, half - entry)) {
+					/* fetch the existing entry */
+					tag = hv_fetch(tags, entry, half - entry, 0);
 
-				hv_store(tags, entry, half - entry, newSVpv(half + 1, 0), 0);
+					/* fetch the multi-value separator or default and append to the entry */
+					if (hv_exists(self, "separator", 9)) {
+						separator = hv_fetch(self, "separator", 9, 0);
+						sv_catsv(*tag, *separator);
+					}
+					else {
+						sv_catpv(*tag, "/");
+					}
+
+					/* concatenate with the new entry */
+					sv_catpv(*tag, half + 1);
+				}
+				else {
+					hv_store(tags, entry, half - entry, newSVpv(half + 1, 0), 0);
+				}
 			}
 
 			my_hv_store(self, "tags", newRV_noinc((SV*) tags));
@@ -289,12 +307,16 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 			my_hv_store(picture, "depth", newSViv(block->data.picture.depth));
 			my_hv_store(picture, "colorIndex", newSViv(block->data.picture.colors));
 			my_hv_store(picture, "imageData", newSVpv((const char*)block->data.picture.data, block->data.picture.data_length));
+			my_hv_store(picture, "pictureType", newSViv(block->data.picture.type));
 
 			my_hv_store(
 				pictureContainer,
 				SvPV_nolen(newSViv(block->data.picture.type)),
 				newRV_noinc((SV*) picture)
 			);
+
+			/* update allpictures */
+			av_push(allpicturesContainer, (SV*) newRV((SV*) picture));
 
 			storePicture = 1;
 
@@ -307,9 +329,14 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 			break;
 	}
 
-	if (storePicture && hv_scalar(pictureContainer)) {
+	if (storePicture) {
+		/* store the 'allpictures' array */
+		my_hv_store(self, "allpictures", newRV_noinc((SV*) allpicturesContainer));
 
-		my_hv_store(self, "picture", newRV_noinc((SV*) pictureContainer));
+		/* store the 'picture' hash */
+		if (hv_scalar(pictureContainer)) {
+			my_hv_store(self, "picture", newRV_noinc((SV*) pictureContainer));
+		}
 	}
 }
 
@@ -608,12 +635,7 @@ _write_XS(obj)
 		FLAC__ASSERT(FLAC__metadata_iterator_get_block(iterator) == block);
 	}
 
-	/* VENDOR must be first */
 	FLAC__StreamMetadata_VorbisComment_Entry entry;
-
-	entry.entry  = (FLAC__byte *)form("VENDOR=%s", FLAC__VENDOR_STRING);
-	entry.length = strlen((const char *)entry.entry);
-
 	FLAC__metadata_object_vorbiscomment_append_comment(block, entry, /*copy=*/true);
 
 	if (hv_iterinit(tags)) {

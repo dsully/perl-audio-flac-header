@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 33;
+use Test::More tests => 31;
 use File::Spec::Functions qw(:ALL);
 
 BEGIN { use_ok('Audio::FLAC::Header') };
@@ -16,16 +16,6 @@ BEGIN { use_ok('Audio::FLAC::Header') };
 		my $flac = Audio::FLAC::Header->$constructor(catdir('data', 'test.flac'));
 
 		ok($flac, "constructor: $constructor");
-
-		my $checkVendor = '';
-
-		if ($constructor =~ /PP/) {
-			$checkVendor = 'Audio::FLAC::Header';
-		} else {
-			$checkVendor = 'libFLAC';
-		}
-
-		like($flac->vendor_string, qr/$checkVendor/, "vendor string");
 
 		my $info = $flac->info();
 
