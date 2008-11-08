@@ -5,7 +5,7 @@ package Audio::FLAC::Header;
 use strict;
 use File::Basename;
 
-our $VERSION = '2.2';
+our $VERSION = '2.3';
 our $HAVE_XS = 0;
 
 # First four bytes of stream are always fLaC
@@ -171,8 +171,14 @@ sub picture {
 		return $self->{'allpictures'} if exists($self->{'allpictures'});
 	}
 
+	# Also look for other types of images
+	# http://flac.sourceforge.net/format.html#metadata_block_picture
+	my @types = ($type, 4, 0, 5..20);
+
 	# if the picture block exists, return it's content
-	return $self->{'picture'}->{$type} if exists($self->{'picture'}->{$type});
+	for (@types) {
+		return $self->{'picture'}->{$_} if exists $self->{'picture'}->{$_};
+	}
 
 	# otherwise, return nothing
 	return undef;

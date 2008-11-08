@@ -56,11 +56,10 @@ void _cuesheet_frame_to_msf(unsigned frame, unsigned *minutes, unsigned *seconds
 void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned block_number) {
 
 	unsigned i;
-	int j;
 	int storePicture = 0;
 
 	HV *pictureContainer = newHV();
-	AV *allpicturesContainer = newAV();
+	AV *allpicturesContainer = NULL;
 
 	switch (block->type) {
 
@@ -193,15 +192,13 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 					if (hv_exists(self, "separator", 9)) {
 						separator = hv_fetch(self, "separator", 9, 0);
 						sv_catsv(*tag, *separator);
-					}
-					else {
+					} else {
 						sv_catpv(*tag, "/");
 					}
 
 					/* concatenate with the new entry */
 					sv_catpv(*tag, half + 1);
-				}
-				else {
+				} else {
 					hv_store(tags, entry, half - entry, newSVpv(half + 1, 0), 0);
 				}
 			}
@@ -315,10 +312,19 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 				newRV_noinc((SV*) picture)
 			);
 
-			/* update allpictures */
-			av_push(allpicturesContainer, (SV*) newRV((SV*) picture));
-
 			storePicture = 1;
+
+			/* update allpictures */
+			if (hv_exists(self, "allpictures", 11)) {
+				allpicturesContainer = (AV *) SvRV(*my_hv_fetch(self, "allpictures")); 
+			} else {
+				allpicturesContainer = newAV();
+
+				/* store the 'allpictures' array */
+				my_hv_store(self, "allpictures", newRV_noinc((SV*) allpicturesContainer));
+                        }
+
+			av_push(allpicturesContainer, (SV*) newRV((SV*) picture));
 
 			break;
 		}
@@ -330,9 +336,6 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 	}
 
 	if (storePicture) {
-		/* store the 'allpictures' array */
-		my_hv_store(self, "allpictures", newRV_noinc((SV*) allpicturesContainer));
-
 		/* store the 'picture' hash */
 		if (hv_scalar(pictureContainer)) {
 			my_hv_store(self, "picture", newRV_noinc((SV*) pictureContainer));
@@ -635,7 +638,7 @@ _write_XS(obj)
 		FLAC__ASSERT(FLAC__metadata_iterator_get_block(iterator) == block);
 	}
 
-	FLAC__StreamMetadata_VorbisComment_Entry entry;
+	FLAC__StreamMetadata_VorbisComment_Entry entry = { 0 };
 	FLAC__metadata_object_vorbiscomment_append_comment(block, entry, /*copy=*/true);
 
 	if (hv_iterinit(tags)) {

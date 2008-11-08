@@ -1,5 +1,8 @@
 Revision history for Perl extension Audio::FLAC.
 
+2.3  Sat Nov  8 15:36:38 PST 2008
+	- Patch from Nick Hall to fix allpictures XS & Debian crash.
+
 2.2  Sat May 17 00:42:06 PDT 2008
 	- Patches from Nick Hall to allow allpictures XS partity & multiple ID3 tag fixes
 	- RT #36000 - Don't add vendor string, or change case of tags.
