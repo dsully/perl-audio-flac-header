@@ -5,7 +5,7 @@ package Audio::FLAC::Header;
 use strict;
 use File::Basename;
 
-our $VERSION = '2.3';
+our $VERSION = '2.4';
 our $HAVE_XS = 0;
 
 # First four bytes of stream are always fLaC
@@ -25,6 +25,8 @@ my $BT_SEEKTABLE      = 3;
 my $BT_VORBIS_COMMENT = 4;
 my $BT_CUESHEET       = 5;
 my $BT_PICTURE        = 6;
+
+my $VENDOR_STRING     = __PACKAGE__ . " v$VERSION";
 
 my %BLOCK_TYPES = (
 	$BT_STREAMINFO     => '_parseStreamInfo',
@@ -201,6 +203,7 @@ sub _write_PP {
 
 	my @tagString = ();
 	my $numTags   = 0;
+	my $numBlocks = 0;
 
 	my ($idxVorbis,$idxPadding);
 	my $totalAvail = 0;
@@ -217,7 +220,12 @@ sub _write_PP {
 	}
 
 	# Create the contents of the vorbis comment metablock with the number of tags
-	my $vorbisComment .= _packInt32($numTags);
+	my $vorbisComment = "";
+
+	# Vendor comment must come first.
+	_addStringToComment(\$vorbisComment, ($self->{'tags'}->{'VENDOR'} || $VENDOR_STRING));
+
+	$vorbisComment .= _packInt32($numTags);
 
 	# Finally, each tag string (with length)
 	foreach (@tagString) {
@@ -260,7 +268,7 @@ sub _write_PP {
 		_addNewMetadataBlock($self, $BT_VORBIS_COMMENT, $vorbisComment);
 	} else {
 		# update the vorbis block
-		_updateMetadataBlock($self, $idxVorbis       , $vorbisComment);
+		_updateMetadataBlock($self, $idxVorbis, $vorbisComment);
 	}
 
 	# Is there a Padding block?
@@ -272,6 +280,26 @@ sub _write_PP {
 		# update the padding block
 		_updateMetadataBlock($self, $idxPadding, "\0" x ($totalAvail - length($vorbisComment)));
 	}
+
+	$numBlocks = @{$self->{'metadataBlocks'}};
+
+	# Sort so that all the padding is at the end.
+	# Our version of FLAC__metadata_chain_sort_padding()
+	for (my $i = 0; $i < $numBlocks; $i++) {
+
+		my $block = $self->{'metadataBlocks'}->[$i];
+
+		if ($block->{'blockType'} == $BT_PADDING) {
+
+			if (my $next = splice(@{$self->{'metadataBlocks'}}, $i+1, 1)) {
+				splice(@{$self->{'metadataBlocks'}}, $i, 1, $next);
+				push @{$self->{'metadataBlocks'}}, $block;
+			}
+                }
+	}
+
+	# Now set the last block.
+	$self->{'metadataBlocks'}->[-1]->{'lastBlockFlag'} = 1;
 
 	# Create the metadata block structure for the FLAC file
 	foreach (@{$self->{'metadataBlocks'}}) {
@@ -287,11 +315,11 @@ sub _write_PP {
 	binmode FLACFILE;
 
 	# overwrite the existing metadata blocks
-	print FLACFILE $metadataBlocks or return 0;
+	my $ret = syswrite(FLACFILE, $metadataBlocks, length($metadataBlocks), 0);
 
 	close FLACFILE;
 
-	return 1;
+	return $ret;
 }
 
 # private methods to this class
@@ -797,12 +825,12 @@ sub _samplesToTime {
 
 sub _bin2dec {
 	# Freely swiped from Perl Cookbook p. 48 (May 1999)
-	return unpack ('N', pack ('B32', substr(0 x 32 . shift, -32)));
+	return unpack ('N', pack ('B32', substr(0 x 32 . $_[0], -32)));
 }
 
 sub _packInt32 {
 	# Packs an integer into a little-endian 32-bit unsigned int
-	return pack('V', shift)
+	return pack('V', $_[0]);
 }
 
 sub _findMetadataIndex {
@@ -844,13 +872,11 @@ sub _addNewMetadataBlock {
 
 	my $numBlocks = @{$self->{'metadataBlocks'}};
 
-	$self->{'metadataBlocks'}->[$numBlocks-1]->{'lastBlockFlag'}= 0;
-
 	# create a new block
-	$self->{'metadataBlocks'}->[$numBlocks]->{'lastBlockFlag'}  = 1;
-	$self->{'metadataBlocks'}->[$numBlocks]->{'blockType'}      = $htype;
-	$self->{'metadataBlocks'}->[$numBlocks]->{'blockSize'}      = length($contents);
-	$self->{'metadataBlocks'}->[$numBlocks]->{'contents'}       = $contents;
+	$self->{'metadataBlocks'}->[$numBlocks]->{'lastBlockFlag'} = 0;
+	$self->{'metadataBlocks'}->[$numBlocks]->{'blockType'}     = $htype;
+	$self->{'metadataBlocks'}->[$numBlocks]->{'blockSize'}     = length($contents);
+	$self->{'metadataBlocks'}->[$numBlocks]->{'contents'}      = $contents;
 }
 
 sub _updateMetadataBlock {
@@ -860,7 +886,7 @@ sub _updateMetadataBlock {
 
 	# Update the block
 	$self->{'metadataBlocks'}->[$blockIdx]->{'blockSize'} = length($contents);
-	$self->{'metadataBlocks'}->[$blockIdx]->{'contents'} = $contents;
+	$self->{'metadataBlocks'}->[$blockIdx]->{'contents'}  = $contents;
 }
 
 1;
@@ -1011,8 +1037,10 @@ Dan Sully, E<lt>daniel@cpan.orgE<gt>
 Pure perl code Copyright (c) 2003-2004, Erik Reckase.
 
 Pure perl code Copyright (c) 2003-2007, Dan Sully & Slim Devices.
+Pure perl code Copyright (c) 2008-2009, Dan Sully
 
 XS code Copyright (c) 2004-2007, Dan Sully & Slim Devices.
+XS code Copyright (c) 2008-2009, Dan Sully
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.2 or,

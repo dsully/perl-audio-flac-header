@@ -11,11 +11,25 @@ BEGIN { use_ok('Audio::FLAC::Header') };
 #########################
 
 {
-	# Be sure to test both code paths.
-	for my $constructor (qw(_new_PP _new_XS)) {
+        # Always test pure perl
+        my @modes = ('PP');
+
+        # Only test XS if built
+        SKIP: {
+                eval { Audio::FLAC::Header->_new_XS(catdir('data', 'empty.flac')) };
+                skip "Not built with XS", 3 if $@;
+
+                push @modes, 'XS';
+        }
+
+        # Be sure to test both code paths.
+        for my $mode (@modes) {
+
+		my $constructor  = "_new_$mode";
+		my $write_method = "_write_$mode";
 
 		my $empty = catdir('data', 'empty.flac');
-		my $write = catdir('data', 'write.flac');
+		my $write = catdir('data', "write_$mode.flac");
 
 		copy($empty, $write);
 
@@ -27,7 +41,7 @@ BEGIN { use_ok('Audio::FLAC::Header') };
 
 		$tags->{'ALBUM'} = 'FOO';
 
-		ok($flac->write, "Wrote out tags");
+		ok($flac->$write_method, "Wrote out tags");
 
 		undef $flac;
 
