@@ -44,7 +44,7 @@
 #define my_hv_store(a,b,c)   hv_store(a,b,strlen(b),c,0)
 #define my_hv_fetch(a,b)     hv_fetch(a,b,strlen(b),0)
 
-void _cuesheet_frame_to_msf(unsigned frame, unsigned *minutes, unsigned *seconds, unsigned *frames) {       
+void _cuesheet_frame_to_msf(unsigned frame, unsigned *minutes, unsigned *seconds, unsigned *frames) {
 
   *frames = frame % 75;
   frame /= 75;
@@ -141,7 +141,7 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
         if (block->data.application.data != 0) {
           my_hv_store(app, SvPV_nolen(appId), newSVpv((char*)block->data.application.data, block->length));
         }
-      
+
         my_hv_store(self, "application",  newRV_noinc((SV*) app));
       }
 
@@ -161,8 +161,7 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 
       for (i = 0; i < block->data.vorbis_comment.num_comments; i++) {
 
-        if (!block->data.vorbis_comment.comments[i].entry ||
-          !block->data.vorbis_comment.comments[i].length){
+        if (!block->data.vorbis_comment.comments[i].entry || !block->data.vorbis_comment.comments[i].length) {
           warn("Empty comment, skipping...\n");
           continue;        
         }
@@ -445,7 +444,6 @@ _new_XS(class, path)
 
   /* Make sure tags is an empty HV if there were no VCs in the file */ 
   if (!hv_exists(self, "tags", 4)) {
-
     my_hv_store(self, "tags", newRV_noinc((SV*) newHV()));
   }
 
