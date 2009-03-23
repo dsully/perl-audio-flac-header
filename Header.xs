@@ -44,7 +44,7 @@
 #define my_hv_store(a,b,c)   hv_store(a,b,strlen(b),c,0)
 #define my_hv_fetch(a,b)     hv_fetch(a,b,strlen(b),0)
 
-void _cuesheet_frame_to_msf(unsigned frame, unsigned *minutes, unsigned *seconds, unsigned *frames) {       
+void _cuesheet_frame_to_msf(unsigned frame, unsigned *minutes, unsigned *seconds, unsigned *frames) {
 
 	*frames = frame % 75;
 	frame /= 75;
@@ -141,7 +141,7 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 				if (block->data.application.data != 0) {
 					my_hv_store(app, SvPV_nolen(appId), newSVpv((char*)block->data.application.data, block->length));
 				}
-			
+
 				my_hv_store(self, "application",  newRV_noinc((SV*) app));
 			}
 
@@ -166,7 +166,7 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 				if (!block->data.vorbis_comment.comments[i].entry ||
 					!block->data.vorbis_comment.comments[i].length){
 					warn("Empty comment, skipping...\n");
-					continue;				
+					continue;
 				}
 
 				char *entry = SvPV_nolen(newSVpv(
@@ -213,10 +213,10 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 		{
 			AV *cueArray = newAV();
 
-			/* 
+			/*
 			 * buffer for decimal representations of uint64_t values
 			 *
-			 * newSVpvf() and sv_catpvf() can't handle 64-bit values 
+			 * newSVpvf() and sv_catpvf() can't handle 64-bit values
 			 * in some cases, so we need to do the conversion "manually"
 			 * with sprintf() and the PRIu64 format macro for portability
 			 *
@@ -242,7 +242,7 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 
 				const FLAC__StreamMetadata_CueSheet_Track *track = cs->tracks + track_num;
 
-				av_push(cueArray, newSVpvf("  TRACK %02u %s\n", 
+				av_push(cueArray, newSVpvf("  TRACK %02u %s\n",
 					(unsigned)track->number, track->type == 0? "AUDIO" : "DATA"
 				));
 
@@ -282,7 +282,7 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 			sprintf(decimal, "%"PRIu64, cs->lead_in);
 			av_push(cueArray, newSVpvf("REM FLAC__lead-in %s\n", decimal));
 			sprintf(decimal, "%"PRIu64, cs->tracks[track_num].offset);
-			av_push(cueArray, newSVpvf("REM FLAC__lead-out %u %s\n", 
+			av_push(cueArray, newSVpvf("REM FLAC__lead-out %u %s\n",
 				(unsigned)cs->tracks[track_num].number, decimal)
 			);
 
@@ -316,7 +316,7 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 
 			/* update allpictures */
 			if (hv_exists(self, "allpictures", 11)) {
-				allpicturesContainer = (AV *) SvRV(*my_hv_fetch(self, "allpictures")); 
+				allpicturesContainer = (AV *) SvRV(*my_hv_fetch(self, "allpictures"));
 			} else {
 				allpicturesContainer = newAV();
 
@@ -448,7 +448,7 @@ _new_XS(class, path)
 
 	FLAC__metadata_chain_delete(chain);
 
-	/* Make sure tags is an empty HV if there were no VCs in the file */ 
+	/* Make sure tags is an empty HV if there were no VCs in the file */
 	if (!hv_exists(self, "tags", 4)) {
 
 		my_hv_store(self, "tags", newRV_noinc((SV*) newHV()));
@@ -511,7 +511,7 @@ _new_XS(class, path)
 			warn("Couldn't read magic fLaC header - got gibberish instead!\n");
 			XSRETURN_UNDEF;
 		}
-			
+
 		while (!is_last) {
 
 			if (PerlIO_read(FH, &buf, 4) != 4) {
