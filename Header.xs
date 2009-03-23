@@ -329,11 +329,11 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
       break;
   }
 
-  if (storePicture) {
-    /* store the 'picture' hash */
-    if (hv_scalar(pictureContainer)) {
-      my_hv_store(self, "picture", newRV_noinc((SV*) pictureContainer));
-    }
+  /* store the 'picture' hash */
+  if (storePicture && hv_scalar(pictureContainer)) {
+    my_hv_store(self, "picture", newRV_noinc((SV*) pictureContainer));
+  } else {
+    SvREFCNT_dec((SV*) pictureContainer);
   }
 }
 
