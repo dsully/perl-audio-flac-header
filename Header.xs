@@ -150,12 +150,10 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
 
     case FLAC__METADATA_TYPE_VORBIS_COMMENT:
     {
-      /* store the pointer location of the '=', poor man's split() */
-      char *half;
-      AV   *rawTagArray = newAV();
-      HV   *tags = newHV();
-      SV   **tag = NULL;
-      SV   **separator = NULL;
+      AV *rawTagArray = newAV();
+      HV *tags = newHV();
+      SV **tag = NULL;
+      SV **separator = NULL;
 
       if (block->data.vorbis_comment.vendor_string.entry) {
         my_hv_store(tags, "VENDOR", newSVpv((char*)block->data.vorbis_comment.vendor_string.entry, 0));
@@ -169,15 +167,12 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
           continue;        
         }
 
-        char *entry = SvPV_nolen(newSVpv(
-          (char*)block->data.vorbis_comment.comments[i].entry,
-          block->data.vorbis_comment.comments[i].length
-        ));
+        /* store the pointer location of the '=', poor man's split() */
+        char *entry = (char*)block->data.vorbis_comment.comments[i].entry;
+        char *half  = strchr(entry, '=');
 
         /* store the raw tags */
         av_push(rawTagArray, newSVpv(entry, 0));
-
-        half = strchr(entry, '=');
 
         if (half == NULL) {
           warn("Comment \"%s\" missing \'=\', skipping...\n", entry);
