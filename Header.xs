@@ -461,15 +461,16 @@ _new_XS(class, path)
     long len;
     struct stat st;
     float totalSeconds;
-    PerlIO *FH;
+    PerlIO *fh;
 
-    if ((FH = PerlIO_open(path, "r")) == NULL) {
+    if ((fh = PerlIO_open(path, "r")) == NULL) {
       warn("Couldn't open file [%s] for reading!\n", path);
       XSRETURN_UNDEF;
     }
 
-    if (PerlIO_read(FH, &buf, 4) == -1) {
+    if (PerlIO_read(fh, &buf, 4) == -1) {
       warn("Couldn't read magic fLaC header!\n");
+      PerlIO_close(fh);
       XSRETURN_UNDEF;
     }
 
@@ -479,16 +480,18 @@ _new_XS(class, path)
       int c = 0;
 
       /* How big is the ID3 header? Skip the next two bytes */
-      if (PerlIO_read(FH, &buf, 2) == -1) {
+      if (PerlIO_read(fh, &buf, 2) == -1) {
         warn("Couldn't read ID3 header length!\n");
+        PerlIO_close(fh);
         XSRETURN_UNDEF;
       }
 
       /* The size of the ID3 tag is a 'synchsafe' 4-byte uint */
       for (c = 0; c < 4; c++) {
 
-        if (PerlIO_read(FH, &buf, 1) == -1 || buf[0] & 0x80) {
+        if (PerlIO_read(fh, &buf, 1) == -1 || buf[0] & 0x80) {
           warn("Couldn't read ID3 header length (syncsafe)!\n");
+          PerlIO_close(fh);
           XSRETURN_UNDEF;
         }
 
@@ -496,26 +499,30 @@ _new_XS(class, path)
         id3size |= (buf[0] & 0x7f);
       }
 
-      if (PerlIO_seek(FH, id3size, SEEK_CUR) < 0) {
+      if (PerlIO_seek(fh, id3size, SEEK_CUR) < 0) {
         warn("Couldn't seek past ID3 header!\n");
+        PerlIO_close(fh);
         XSRETURN_UNDEF;
       }
 
-      if (PerlIO_read(FH, &buf, 4) == -1) {
+      if (PerlIO_read(fh, &buf, 4) == -1) {
         warn("Couldn't read magic fLaC header!\n");
+        PerlIO_close(fh);
         XSRETURN_UNDEF;
       }
     }
 
     if (memcmp(buf, FLACHEADERFLAG, 4)) {
       warn("Couldn't read magic fLaC header - got gibberish instead!\n");
+      PerlIO_close(fh);
       XSRETURN_UNDEF;
     }
       
     while (!is_last) {
 
-      if (PerlIO_read(FH, &buf, 4) != 4) {
+      if (PerlIO_read(fh, &buf, 4) != 4) {
         warn("Couldn't read 4 bytes of the metadata block!\n");
+        PerlIO_close(fh);
         XSRETURN_UNDEF;
       }
 
@@ -523,11 +530,11 @@ _new_XS(class, path)
 
       len = (long)((buf[1] << 16) | (buf[2] << 8) | (buf[3]));
 
-      PerlIO_seek(FH, len, SEEK_CUR);
+      PerlIO_seek(fh, len, SEEK_CUR);
     }
 
-    len = PerlIO_tell(FH);
-    PerlIO_close(FH);
+    len = PerlIO_tell(fh);
+    PerlIO_close(fh);
 
     my_hv_store(self, "startAudioData", newSVnv(len));
 
