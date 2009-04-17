@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 31;
+use Test::More tests => 43;
 use File::Spec::Functions qw(:ALL);
 
 BEGIN { use_ok('Audio::FLAC::Header') };
@@ -15,7 +15,7 @@ BEGIN { use_ok('Audio::FLAC::Header') };
         # Only test XS if built
         SKIP: {
                 eval { Audio::FLAC::Header->_new_XS(catdir('data', 'test.flac')) };
-                skip "Not built with XS", 15 if $@;
+                skip "Not built with XS", 21 if $@;
 
                 push @constructors, '_new_XS';
         }
@@ -35,6 +35,12 @@ BEGIN { use_ok('Audio::FLAC::Header') };
 		ok($flac->info('SAMPLERATE') == 44100, "sample rate");
 		ok($flac->info('MD5CHECKSUM') eq '592fb7897a3589c6acf957fd3f8dc854', "md5");
 		ok($flac->info('TOTALSAMPLES') == 153200460, "total samples");
+		ok($flac->info('BITSPERSAMPLE') == 16, "bits per sample $constructor");
+		ok($flac->info('NUMCHANNELS') == 2, "channels $constructor");
+		ok($flac->info('MINIMUMBLOCKSIZE') == 4608, "minimum block size $constructor");
+		ok($flac->info('MAXIMUMBLOCKSIZE') == 4608, "maximum block size $constructor");
+		ok($flac->info('MINIMUMFRAMESIZE') == 14, "minimum frame size $constructor");
+		ok($flac->info('MAXIMUMFRAMESIZE') == 18002, "maximum frame size $constructor");
 
 		my $tags = $flac->tags();
 

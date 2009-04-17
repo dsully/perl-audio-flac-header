@@ -10,6 +10,9 @@ Revision history for Perl extension Audio::FLAC.
 	- Patch from Nick for https://rt.cpan.org/Ticket/Display.html?id=44930
 	  Allows PP only version.
 
+	- Patch from Nick for https://rt.cpan.org/Ticket/Display.html?id=44943
+	  _parseStreamInfo - Fix incorrect decoding of metadata
+
 2.3  Sat Nov  8 15:36:38 PST 2008
 	- Patch from Nick Hall to fix allpictures XS & Debian crash.
 
