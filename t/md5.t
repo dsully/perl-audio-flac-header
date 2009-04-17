@@ -9,9 +9,19 @@ BEGIN { use_ok('Audio::FLAC::Header') };
 #########################
 
 {
+        # Always test pure perl
+        my @constructors = ('_new_PP');
 
-	# Be sure to test both code paths.
-	for my $constructor (qw(_new_PP _new_XS)) {
+        # Only test XS if built
+        SKIP: {
+                eval { Audio::FLAC::Header->_new_XS(catdir('data', 'md5.flac')) };
+                skip "Not built with XS", 1 if $@;
+
+                push @constructors, '_new_XS';
+        }
+
+        # Be sure to test both code paths.
+        for my $constructor (@constructors) {
 
 		my $flac = Audio::FLAC::Header->$constructor(catdir('data', 'md5.flac'));
 
