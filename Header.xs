@@ -42,6 +42,7 @@
 
 /* strlen the length automatically */
 #define my_hv_store(a,b,c)   hv_store(a,b,strlen(b),c,0)
+#define my_hv_store_ent(a,b,c) hv_store_ent(a,b,c,0)
 #define my_hv_fetch(a,b)     hv_fetch(a,b,strlen(b),0)
 
 void _cuesheet_frame_to_msf(unsigned frame, unsigned *minutes, unsigned *seconds, unsigned *frames) {
@@ -84,7 +85,7 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
         /* Initialize an SV with the first element,
            and then append to it. If we don't do it this way, we get a "use of
            uninitialized element" in subroutine warning. */
-        SV *md5 = newSVpvf("%02x", (unsigned)block->data.stream_info.md5sum[0], 32);
+        SV *md5 = newSVpvf("%02x", (unsigned)block->data.stream_info.md5sum[0]);
 
         for (i = 1; i < 16; i++) {
           sv_catpvf(md5, "%02x", (unsigned)block->data.stream_info.md5sum[i]);
@@ -128,7 +129,7 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
       if (block->data.application.id[0]) {
 
         HV *app   = newHV();
-        SV *tmpId = newSVpvf("%02x", (unsigned)block->data.application.id[0], 8);
+        SV *tmpId = newSVpvf("%02x", (unsigned)block->data.application.id[0]);
         SV *appId;
 
         for (i = 1; i < 4; i++) {
@@ -139,10 +140,13 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
         appId = newSVpvf("%ld", strtol(SvPV_nolen(tmpId), NULL, 16));
 
         if (block->data.application.data != 0) {
-          my_hv_store(app, SvPV_nolen(appId), newSVpv((char*)block->data.application.data, block->length));
+          my_hv_store_ent(app, appId, newSVpvn((char*)block->data.application.data, block->length));
         }
 
         my_hv_store(self, "application",  newRV_noinc((SV*) app));
+
+        SvREFCNT_dec(tmpId);
+        SvREFCNT_dec(appId);
       }
 
       break;
@@ -290,6 +294,7 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
     case FLAC__METADATA_TYPE_PICTURE:
     {
       HV *picture = newHV();
+      SV *type;
 
       my_hv_store(picture, "mimeType", newSVpv(block->data.picture.mime_type, 0));
       my_hv_store(picture, "description", newSVpv((const char*)block->data.picture.description, 0));
@@ -300,11 +305,11 @@ void _read_metadata(HV *self, char *path, FLAC__StreamMetadata *block, unsigned 
       my_hv_store(picture, "imageData", newSVpv((const char*)block->data.picture.data, block->data.picture.data_length));
       my_hv_store(picture, "pictureType", newSViv(block->data.picture.type));
 
-      my_hv_store(
-        pictureContainer,
-        SvPV_nolen(newSViv(block->data.picture.type)),
-        newRV_noinc((SV*) picture)
-      );
+      type = newSViv(block->data.picture.type);
+
+      my_hv_store_ent(pictureContainer, type, newRV_noinc((SV*) picture));
+
+      SvREFCNT_dec(type);
 
       storePicture = 1;
 
