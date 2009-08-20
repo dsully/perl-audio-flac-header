@@ -189,7 +189,14 @@ sub picture {
 sub vendor_string {
 	my $self = shift;
 
-	return $self->{'vendor'} || '';
+	return $self->{'tags'}->{'VENDOR'} || '';
+}
+
+sub set_vendor_string {
+	my $self  = shift;
+	my $value = shift || $VENDOR_STRING;
+
+	return $self->{'tags'}->{'VENDOR'} = $value;
 }
 
 sub set_separator {
@@ -1014,6 +1021,10 @@ For multi-value ID3 tags, set the separator string. Defaults to '/'
 =item * vendor_string( )
 
 Returns the vendor string.
+
+=item * set_vendor_string( $string )
+
+Set the vendor string. Will be written on write()
 
 =item * write( )
 

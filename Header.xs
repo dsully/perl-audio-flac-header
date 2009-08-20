@@ -550,7 +550,6 @@ _new_XS(class, path)
   }
 
   my_hv_store(self, "filename", newSVpv(path, 0));
-  my_hv_store(self, "vendor", newSVpv((char*)FLAC__VENDOR_STRING, 0));
 
   /* Bless the hashref to create a class object */
   sv_bless(obj_ref, gv_stashpv(class, FALSE));
@@ -656,29 +655,39 @@ _write_XS(obj)
       char *val = SvPV_nolen(HeVAL(he));
       char *ent = form("%s=%s", key, val);
 
-      if (strEQ(key, "VENDOR")) {
-        continue;
-      }
-
       if (ent == NULL) {
-
         warn("Couldn't create key/value pair!\n");
         XSRETURN_UNDEF;
       }
 
-      entry.entry  = (FLAC__byte *)ent;
-      entry.length = strlen((const char *)entry.entry);
-
-      if (!FLAC__format_vorbiscomment_entry_is_legal(entry.entry, entry.length)) {
-
-        warn("%s: ERROR: tag value for '%s' is not valid UTF-8\n", path, ent);
-        XSRETURN_UNDEF;
+      if (strEQ(key, "VENDOR")) {
+        entry.entry = (FLAC__byte *)val;
+      } else {
+        entry.entry = (FLAC__byte *)ent;
       }
 
-      if (!FLAC__metadata_object_vorbiscomment_append_comment(block, entry, /*copy=*/true)) {
+      entry.length = strlen((const char *)entry.entry);
 
-        warn("%s: ERROR: memory allocation failure\n", path);
-        XSRETURN_UNDEF;
+      if (strEQ(key, "VENDOR")) {
+
+        if (!FLAC__metadata_object_vorbiscomment_set_vendor_string(block, entry, /*copy=*/true)) {
+          warn("%s: ERROR: memory allocation failure\n", path);
+          XSRETURN_UNDEF;
+        }
+
+      } else {
+
+        if (!FLAC__format_vorbiscomment_entry_is_legal(entry.entry, entry.length)) {
+
+          warn("%s: ERROR: tag value for '%s' is not valid UTF-8\n", path, ent);
+          XSRETURN_UNDEF;
+        }
+
+        if (!FLAC__metadata_object_vorbiscomment_append_comment(block, entry, /*copy=*/true)) {
+
+          warn("%s: ERROR: memory allocation failure\n", path);
+          XSRETURN_UNDEF;
+        }
       }
     }
   }
