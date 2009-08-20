@@ -31,7 +31,7 @@ my $VENDOR_STRING     = __PACKAGE__ . " v$VERSION";
 my %BLOCK_TYPES = (
 	$BT_STREAMINFO     => '_parseStreamInfo',
 	$BT_APPLICATION    => '_parseAppBlock',
-# The seektable isn't actually useful yet, and is a big performance hit. 
+# The seektable isn't actually useful yet, and is a big performance hit.
 #	$BT_SEEKTABLE      => '_parseSeekTable',
 	$BT_VORBIS_COMMENT => '_parseVorbisComments',
 	$BT_CUESHEET       => '_parseCueSheet',
@@ -167,7 +167,7 @@ sub application {
 sub picture {
 	my $self = shift;
 	my $type = shift;
-	   $type = 3 unless defined ($type); # defaults to front cover 
+	   $type = 3 unless defined ($type); # defaults to front cover
 
 	if ($type eq 'all') {
 		return $self->{'allpictures'} if exists($self->{'allpictures'});
@@ -381,7 +381,7 @@ sub _getMetadataBlocks {
 		my $metadataBlockLength = ($BLOCKLENFLAG  & $metadataBlockHeader);
 		   $lastBlockFlag       = ($LASTBLOCKFLAG & $metadataBlockHeader)>>31;
 
-		# If the block size is zero go to the next block 
+		# If the block size is zero go to the next block
 		next unless $metadataBlockLength;
 
 		# Read the contents of the metadata_block
@@ -425,7 +425,7 @@ sub _parseStreamInfo {
 	# Calculate total samples in two parts
 	my $highBits = unpack('N', pack('B32', substr($x32 . substr($metaBinString, 108, 4), -32)));
 
-	$info->{'TOTALSAMPLES'} = $highBits * 2 ** 32 + 
+	$info->{'TOTALSAMPLES'} = $highBits * 2 ** 32 +
 		unpack('N', pack('B32', substr($x32 . substr($metaBinString, 112, 32), -32)));
 
 	# Return the MD5 as a 32-character hexadecimal string
@@ -631,7 +631,7 @@ sub _parseCueSheet {
 			#return -1; # ?? may be harmless to continue ...
 		}
 
-		my $numIndexes = _bin2dec(unpack('B8',substr($tmpBlock,35,1)));		
+		my $numIndexes = _bin2dec(unpack('B8',substr($tmpBlock,35,1)));
 
 		$tmpBlock = substr($tmpBlock,36);
 
@@ -759,7 +759,7 @@ sub _parseSeekTable {
 		# since the table is sorted, a placeholder means were finished
 		last if ($sampleNumber == (0xFFFFFFFF * 2 ** 32 + 0xFFFFFFFF));
 
-		# Offset (in bytes) from the first byte of the first frame header 
+		# Offset (in bytes) from the first byte of the first frame header
 		# to the first byte of the target frame's header.
 		$highbits = unpack('N', substr($seekpoint,8,4));
 		my $streamOffset = $highbits * 2 ** 32 + unpack('N', (substr($seekpoint,12,4)));
@@ -769,7 +769,7 @@ sub _parseSeekTable {
 
 		# add this point to our copy of the table
 		push (@$seektable, {
-			'sampleNumber' => $sampleNumber, 
+			'sampleNumber' => $sampleNumber,
 			'streamOffset' => $streamOffset,
 			'frameSamples' => $frameSamples,
 		});
@@ -808,7 +808,7 @@ sub _samplesToTime {
 
 	if ($totalSeconds == 0) {
 		# handled specially to avoid division by zero errors
-		return "00:00:00";		
+		return "00:00:00";
 	}
 
 	my $trackMinutes  = int(int($totalSeconds) / 60);
@@ -817,8 +817,8 @@ sub _samplesToTime {
 
 	# Poor man's rounding. Needed to match the output of metaflac.
 	$trackFrames = int($trackFrames + 0.5);
-	
-	my $formattedTime = sprintf("%02d:%02d:%02d", $trackMinutes, $trackSeconds, $trackFrames); 
+
+	my $formattedTime = sprintf("%02d:%02d:%02d", $trackMinutes, $trackSeconds, $trackFrames);
 
 	return $formattedTime;
 }
@@ -917,7 +917,7 @@ Audio::FLAC::Header - interface to FLAC header metadata.
 =head1 DESCRIPTION
 
 This module returns a hash containing basic information about a FLAC file,
-a representation of the embedded cue sheet if one exists,  as well as tag 
+a representation of the embedded cue sheet if one exists,  as well as tag
 information contained in the FLAC file's Vorbis tags.
 There is no complete list of tag keys for Vorbis tags, as they can be
 defined by the user; the basic set of tags used for FLAC files include:
@@ -986,7 +986,7 @@ cuesheet metada block. Each element in the array corresponds to one
 line in a .cue file. If there is no cuesheet block in this FLAC file
 the array will be empty. The resulting cuesheet should match the
 output of metaflac's --export-cuesheet-to option, with the exception
-of the FILE line, which includes the actual file name instead of 
+of the FILE line, which includes the actual file name instead of
 "dummy.wav".
 
 =item * seektable( )
@@ -997,7 +997,7 @@ Returns the seektable. Currently disabled for performance.
 
 Returns the application block for the passed id.
 
-=item * picture( [$type ] ) 
+=item * picture( [$type ] )
 
 Returns a hash containing data from a PICTURE block if found.
 
@@ -1007,11 +1007,11 @@ When the passed variable is 'all', an array of hashes containing
 picture data from all PICTURE blocks is returned. Allows for multiple instances
 of the same picture type.
 
-=item * set_separator( ) 
+=item * set_separator( )
 
 For multi-value ID3 tags, set the separator string. Defaults to '/'
 
-=item * vendor_string( ) 
+=item * vendor_string( )
 
 Returns the vendor string.
 
