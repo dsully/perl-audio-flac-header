@@ -1,6 +1,6 @@
 Revision history for Perl extension Audio::FLAC.
 
-2.4  --DATE--
+2.4  Sat Sep 18 06:40:38 PDT 2010
 	- Fix _write_PP method. Now writes out vendor string, sorts padding.
 	  Which fixes bugs: https://rt.cpan.org/Ticket/Display.html?id=42305
 	  and https://rt.cpan.org/Ticket/Display.html?id=42306
